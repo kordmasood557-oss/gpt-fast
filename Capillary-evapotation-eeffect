@@ -1,0 +1,84 @@
+"""
+Fast GPT — ABC Dual-NPU Thermal Scheduler v0.3
++ Integrated Beetle-Inspired Capillary/Evaporation Cooling Buffer
+"""
+
+import random
+from dataclasses import dataclass
+
+@dataclass
+class NPU:
+    name: str
+    temperature: float = 42.0
+    max_temperature: float = 80.0
+
+def beetle_capillary_cooling(node_temp, peak_threshold=65.0):
+    """
+    شبیه‌سازی اثر خنک‌کنندگی تبخیری و مویرگی (الهام‌گرفته از سوسک صحرایی):
+    اگر دمای NPU از آستانه عبور کند، ماده‌ی تغییر فاز و کانال‌های مویرگی
+    وارد عمل شده و مقدار معینی از حرارتِ اوج را به سرعت جذب و دفع می‌کنند.
+    """
+    if node_temp > peak_threshold:
+        # افت دما به لطف جذب گرمای نهان تبخیر و انتقال به ناحیه حاشیه‌ای (لنز/فلش)
+        latent_heat_absorption = (node_temp - peak_threshold) * 0.35
+        return latent_heat_absorption
+    return 0.0
+
+def simulate(split, steps=300):
+    """مدل شبیه‌سازی دو NPU همراه با زمان‌بندی زنبوری و بافر خنک‌کننده مویرگی."""
+    nodes = [NPU("NPU-A"), NPU("NPU-B")]
+    energy = 0.0
+    completed = 0.0
+    peak = 0.0
+
+    for step in range(steps):
+        # تقسیم بار بین دو NPU
+        loads = [split, 1.0 - split]
+        
+        for i, node in enumerate(nodes):
+        # تولید گرما بر اساس بار پردازشی
+            heat_generation = loads[i] * 1.8
+            node.temperature += heat_generation
+            
+            # اعمال اثر خنک‌کننده مویرگی/تبخیری جدید
+            cooling_effect = beetle_capillary_cooling(node.temperature)
+            node.temperature -= cooling_effect
+
+            # اتلاف حرارت طبیعی محیطی
+            node.temperature -= 0.7  
+            
+            # محدودسازی دما بین حد اقل و حداکثر
+            node.temperature = max(38.0, min(node.temperature, node.max_temperature))
+            
+            # ثبت اوج دما
+            if node.temperature > peak:
+                peak = node.temperature
+                
+            completed += loads[i] * 10.0
+            energy += loads[i] * 1.2
+
+    # محاسبه امتیاز کارایی (بازده بر اساس پایداری دما و کار انجام شده)
+    efficiency = completed / (energy * (peak / 40.0))
+    return efficiency, peak
+
+def run_abc_scheduler():
+    print("--- در حال اجرای شبیه‌سازی هوش مصنوعی زنبوری + خنک‌کننده مویرگی ---")
+    best_split = 0.5
+    best_efficiency = -1.0
+    best_peak = 100.0
+
+    # شبیه‌سازی ساده ازدحام زنبورها (Artificial Bee Colony) برای یافتن بهترین تقسیم بار
+    for candidate in [0.2, 0.35, 0.5, 0.65, 0.8]:
+        eff, pk = simulate(candidate)
+        print(f"تقسیم بار [{candidate*100:.0f}% NPU-A]: کارایی = {eff:.4f} | اوج دما = {pk:.1f}°C")
+        if eff > best_efficiency:
+            best_efficiency = eff
+            best_split = candidate
+            best_peak = pk
+
+    print("\n[نتیجه نهایی بهترین حالت]:")
+    print(f"بهترین تقسیم بار: {best_split*100:.0f}% برای NPU-A و {(1-best_split)*100:.0f}% برای NPU-B")
+    print(f"کمترین اوج دمای ثبت‌شده با کمک بافر مویرگی: {best_peak:.1f}°C\n")
+
+if __name__ == "__main__":
+    run_abc_scheduler()
