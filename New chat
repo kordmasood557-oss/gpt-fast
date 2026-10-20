@@ -1,0 +1,67 @@
+
+import random
+from dataclasses import dataclass
+
+@dataclass
+class NPU:
+    name: str
+    temperature: float = 42.0
+    max_temperature: float = 80.0
+    active_load: float = 0.0
+
+def simulate_advanced_thermal(steps=300):
+    nodes = [NPU("NPU-A"), NPU("NPU-B")]
+    ambient = 42.0
+    peak_temp = ambient
+    total_efficiency = 0.0
+    thermal_limit_hits = 0
+
+    for step in range(steps):
+        # تقسیم بار آزمایشی؛ هنوز ABC واقعی نیست
+        split_a = random.uniform(0.35, 0.65)
+        split_b = 1.0 - split_a
+
+        nodes[0].active_load = split_a
+        nodes[1].active_load = split_b
+
+        for node in nodes:
+            heat_generated = node.active_load * 3.0
+
+            # تقویت فرضی دفع گرما بالای 50 درجه
+            boost = 1.4 if node.temperature > 50 else 1.0
+
+            # دفع گرما متناسب با اختلاف دما با محیط
+            passive_cooling = max(
+                0.0, node.temperature - ambient
+            ) * 0.08
+
+            active_cooling = 0.8 * boost
+
+            node.temperature += (
+                heat_generated
+                - passive_cooling
+                - active_cooling
+            )
+
+            node.temperature = max(ambient, node.temperature)
+            peak_temp = max(peak_temp, node.temperature)
+
+            if node.temperature >= node.max_temperature:
+                thermal_limit_hits += 1
+
+        balance_score = 1.0 - abs(
+            nodes[0].active_load - nodes[1].active_load
+        )
+
+        hottest = max(n.temperature for n in nodes)
+        temp_penalty = max(0.0, (hottest - 45.0) / 30.0)
+        total_efficiency += balance_score / (1.0 + temp_penalty)
+
+    return {
+        "average_score": total_efficiency / steps,
+        "peak_temperature": peak_temp,
+        "thermal_limit_hits": thermal_limit_hits,
+    }
+
+result = simulate_advanced_thermal()
+print(result)
