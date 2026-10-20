@@ -1,0 +1,64 @@
+import random
+from dataclasses import dataclass
+
+@dataclass
+class NPU:
+    name: str
+    temperature: float = 42.0
+    max_temperature: float = 80.0
+    active_load: float = 0.0
+
+def simulate_advanced_thermal(steps=300):
+    """
+    شبیه‌سازی پیشرفته شامل:
+    - تقسیم بار هوشمند (ABC Dual-NPU)
+    - هدایت حرارتی موضعی به سمت ناحیه فلش/لنز
+    - اثر خنک‌کنندگی مویرگی (الهام از سوسک صحرایی در محفظه بسته)
+    """
+    nodes = [NPU("NPU-A"), NPU("NPU-B")]
+    peak_temp = 0.0
+    total_efficiency = 0.0
+
+    for step in range(steps):
+        # الگوریتم ساده‌شده‌ی تعادل بار زنبوری (ABC)
+        # هر بار یکی فعال‌تر است تا بار و گرما بین دو تراشه پخش شود
+        split_a = 0.5 + 0.3 * (random.random() - 0.5)
+        split_b = 1.0 - split_a
+        
+        nodes[0].active_load = split_a
+        nodes[1].active_load = split_b
+
+        for node in nodes:
+            # تولید گرما متناسب با بار
+            heat_generated = node.active_load * 2.5
+            
+            # اگر دما بالا برود، مکانیزم انتقال به لنز/فلش و تبخیر مویرگی فعال می‌شود
+            if node.temperature > 50.0:
+                # ضریب دفع موثر به لطف کانال‌های مویرگی و انتقال به ناحیه فلش
+                dissipation_boost = 1.4 
+            else:
+                dissipation_boost = 1.0
+
+            # محاسبه دمای جدید
+            cooling = 1.8 * dissipation_boost
+            node.temperature += heat_generated - cooling
+            
+            # بازگشت طبیعی به دمای محیط
+            if node.temperature < 42.0:
+                node.temperature = 42.0
+
+            if node.temperature > peak_temp:
+                peak_temp = node.temperature
+
+        # محاسبه کارایی لحظه‌ای (تعادل بار و کنترل دما)
+        balance_score = 1.0 - abs(nodes[0].active_load - nodes[1].active_load)
+        temp_penalty = max(0.0, (peak_temp - 45.0) / 30.0)
+        efficiency = balance_score / (1.0 + temp_penalty)
+        total_efficiency += efficiency
+
+    return total_efficiency / steps, peak_temp
+
+# اجرای شبیه‌سازی
+avg_eff, max_t = simulate_advanced_thermal()
+print(f"Average Efficiency Score: {avg_eff:.5f}")
+print(f"Peak Temperature Reached: {max_t:.2f} °C")
